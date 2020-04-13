@@ -1,0 +1,63 @@
+//Motion Detection
+
+int inputPin = D0;              // Choose the input pin (for PIR sensor)
+int ledPin = D1;                // LED Pin
+int pirState = LOW;             // Assuming no motion detected
+int val = 0;                    // Variable for reading the pin status
+
+int calibrateTime = 5000;      // wait for Photon to calibrate
+
+void setup() {
+    pinMode(ledPin, OUTPUT);
+    pinMode(inputPin, INPUT);     // declare sensor as input
+}
+
+void loop() {
+
+  // if the sensor is calibrated
+  if (calibrated()) {
+  // get the data from the sensor
+    readTheSensor();
+
+    // report it out, if the state has changed
+    reportTheData();
+    }
+}
+
+void readTheSensor() {
+    val = digitalRead(inputPin);
+}
+
+bool calibrated() {
+    return millis() - calibrateTime > 0;
+}
+
+void setLED(int state) {
+    digitalWrite(ledPin, state);
+}
+
+void reportTheData() {
+    
+    String motion = String(random(60, 80));
+    
+    if (val == HIGH) {
+        // the current state is no motion
+        // i.e. Motion detected 
+        // announce this change by publishing an event
+        if (pirState == LOW) {
+          // we have just turned on
+          Particle.publish("motion", motion, PRIVATE);
+          // Update the current state
+          pirState = HIGH;
+          setLED(pirState);
+        }
+    } else {
+        if (pirState == HIGH) {
+          // LED has just turned off
+          // Update the current state
+          Particle.publish("motion", data , PRIVATE);
+          pirState = LOW;
+          setLED(pirState);
+        }
+    }
+}
